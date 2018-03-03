@@ -85,5 +85,5 @@ impl Drop for DiscordConnection {
 
 #[test]
 fn connect_and_listen() {
-    let conn = DiscordConnection::new("419354795699339287".to_string(), 1, "".to_string());
+    let conn = DiscordConnection::new("YOUR_CLIENT_ID".to_string(), 1, "".to_string());
 }

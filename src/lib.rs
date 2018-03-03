@@ -10,109 +10,80 @@
 #![feature(libc)]
 extern crate libc;
 use std::ffi::CString;
+use libc::c_int;
 
-
-#[link(name = "discord-rpc", kind="static")]
-extern "C" {
-
-	fn Discord_Initialize(application_id: *const u8, handlers: DiscordEventHandlers, auto_register: u32, steam_id: *const u8);
-	fn Discord_Shutdown();
-	fn Discord_UpdatePresence(update: DiscordRichPresence);
-	fn Discord_ClearPresence();
-	fn Discord_RunCallbacks();
-	fn Discord_Respond(userid: *const u8, reply: u32);
-
-}
-
-#[repr(C)]
-struct DiscordEventHandlers {
-
-	ready: extern fn(),
-	errored: extern fn(error_code: u32, error_message: *const u8),
-	disconnected: extern fn(error_code: u32, error_message: *const u8)
-
-}
-
-#[repr(C)]
-struct DiscordRichPresence {
-	state: *const u8,
-	details: *const u8,
-	start_timestamp: u64,
-	end_timestamp: u64,
-	large_image_key: *const u8,
-	large_image_text: *const u8,
-	small_image_key: *const u8,
-	small_image_text: *const u8,
-	party_id: *const u8,
-	party_size: u32,
-	party_max: u32
-}
-
+pub mod bindings;
 
 #[no_mangle]
-pub extern fn handle_ready() {
-
-	println!("Ready called!")
-
+pub unsafe extern "C" fn handle_ready() {
+    println!("Ready called!")
 }
 
 #[no_mangle]
-pub extern fn handle_errored(error_code: u32, error_message: *const u8) {
-
-	println!("Errored called!")
-
-
+pub unsafe extern "C" fn handle_errored(error_code: i32, error_message: *const i8) {
+    println!("Errored called!")
 }
 
 #[no_mangle]
-pub extern fn handle_disconnected(error_code: u32, error_message: *const u8) {
-	println!("Disconnected called!")
+pub unsafe extern "C" fn handle_disconnected(error_code: i32, error_message: *const i8) {
+    println!("Disconnected called!")
+}
 
+#[no_mangle]
+pub unsafe extern "C" fn handle_join_game(join_secret: *const i8) {
+    println!("Disconnected called!")
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn handle_join_request(join_request: *const bindings::DiscordJoinRequest) {
+    println!("Disconnected called!")
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn handle_spectate(spectate_secret: *const i8) {
+    println!("Disconnected called!")
 }
 
 struct DiscordConnection {
-	status: DiscordRichPresence
+    status: bindings::DiscordRichPresence,
 }
 
 impl DiscordConnection {
-	
-	fn new(application_id: String, auto_register: u32, steam_id: String) {
+    fn new(application_id: String, auto_register: libc::c_int, steam_id: String) {
+        let mut handlers = bindings::DiscordEventHandlers {
+            ready: Some(handle_ready),
+            errored: Some(handle_errored),
+            disconnected: Some(handle_disconnected),
+            joinGame: Some(handle_join_game),
+            joinRequest: Some(handle_join_request),
+            spectateGame: Some(handle_spectate)
+        };
 
-		let handlers = DiscordEventHandlers {
-			ready: handle_ready,
-			errored: handle_errored,
-			disconnected: handle_disconnected
-		};
+        // let application_id  = CString::from_vec_unchecked(application_id);
+        // let steam_id 		= CString::from_vec_unchecked(steam_id);
 
-		// let application_id  = CString::from_vec_unchecked(application_id);
-		// let steam_id 		= CString::from_vec_unchecked(steam_id); 
-
-		unsafe { 
-			Discord_Initialize(application_id.as_ptr(), handlers, auto_register, steam_id.as_ptr());
-		}
-
-	}
-
+        unsafe {
+            bindings::Discord_Initialize(
+                CString::new(application_id).unwrap().as_ptr(),
+                &mut handlers,
+                auto_register,
+                CString::new(steam_id).unwrap().as_ptr(),
+            );
+        }
+    }
 }
 
 impl Drop for DiscordConnection {
+    fn drop(&mut self) {
+        println!("Dropping DiscordConnection");
 
-	fn drop(&mut self) {
-
-		println!("Dropping DiscordConnection");
-
-		unsafe {
-			Discord_Shutdown();
-		}
-
-	}
-
+        unsafe {
+            bindings::Discord_Shutdown();
+        }
+    }
 }
-
 
 #[test]
 fn connect_and_listen() {
-	
-	let conn = DiscordConnection::new("419354795699339287".to_string(), 1, "".to_string());
-
+    let conn = DiscordConnection::new("419354795699339287".to_string(), 1, "".to_string());
 }

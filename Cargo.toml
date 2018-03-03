@@ -6,3 +6,6 @@ build = "build.rs"
 
 [dependencies]
 libc = "0.2.37"
+
+[build-dependencies]
+bindgen = "0.33.1"

@@ -59,9 +59,6 @@ impl DiscordConnection {
             spectateGame: Some(handle_spectate)
         };
 
-        // let application_id  = CString::from_vec_unchecked(application_id);
-        // let steam_id 		= CString::from_vec_unchecked(steam_id);
-
         unsafe {
             bindings::Discord_Initialize(
                 CString::new(application_id).unwrap().as_ptr(),

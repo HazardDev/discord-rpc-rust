@@ -17,7 +17,7 @@ pub mod bindings;
 #[allow(dead_code)]
 struct DiscordConnection {
     presence: bindings::DiscordRichPresence,
-    applicationId: String,
+    application_id: String,
     auto_register: i32,
     steam_id: String,
     handlers: bindings::DiscordEventHandlers,
@@ -26,46 +26,47 @@ struct DiscordConnection {
 #[allow(dead_code)]
 impl DiscordConnection {
     fn new(
-        applicationId: String,
+        application_id: String,
         handlers: &mut bindings::DiscordEventHandlers,
         auto_register: libc::c_int,
         steam_id: String,
     ) -> DiscordConnection {
         unsafe {
             bindings::Discord_Initialize(
-                CString::new(applicationId.as_str()).unwrap().as_ptr(),
+                CString::new(application_id.as_str()).unwrap().into_raw(),
                 handlers,
                 auto_register,
-                CString::new(steam_id.as_str()).unwrap().as_ptr(),
+                CString::new(steam_id.as_str()).unwrap().into_raw(),
             );
         }
 
         DiscordConnection {
-            applicationId: applicationId,
+            application_id: application_id,
             auto_register: auto_register,
             steam_id: steam_id,
             handlers: handlers.to_owned(),
             presence: bindings::DiscordRichPresence {
-                state: CString::new(String::new()).unwrap().as_ptr(),
-                details: CString::new(String::new()).unwrap().as_ptr(),
-                startTimestamp: 0,
-                endTimestamp: 0,
-                largeImageKey: CString::new(String::new()).unwrap().as_ptr(),
-                largeImageText: CString::new(String::new()).unwrap().as_ptr(),
-                smallImageKey: CString::new(String::new()).unwrap().as_ptr(),
-                smallImageText: CString::new(String::new()).unwrap().as_ptr(),
-                partyId: CString::new(String::new()).unwrap().as_ptr(),
-                partySize: 0,
-                partyMax: 0,
-                matchSecret: CString::new(String::new()).unwrap().as_ptr(),
-                joinSecret: CString::new(String::new()).unwrap().as_ptr(),
-                spectateSecret: CString::new(String::new()).unwrap().as_ptr(),
+                state: CString::new(String::new()).unwrap().into_raw(),
+                details: CString::new(String::new()).unwrap().into_raw(),
+                start_timestamp: 0,
+                end_timestamp: 0,
+                large_image_key: CString::new(String::new()).unwrap().into_raw(),
+                large_image_text: CString::new(String::new()).unwrap().into_raw(),
+                small_image_key: CString::new(String::new()).unwrap().into_raw(),
+                small_image_text: CString::new(String::new()).unwrap().into_raw(),
+                party_id: CString::new(String::new()).unwrap().into_raw(),
+                party_size: 0,
+                party_max: 0,
+                match_secret: CString::new(String::new()).unwrap().into_raw(),
+                join_secret: CString::new(String::new()).unwrap().into_raw(),
+                spectate_secret: CString::new(String::new()).unwrap().into_raw(),
                 instance: 0,
             },
         }
     }
 
     fn update(&self, presence: &bindings::DiscordRichPresence) {
+        // println!("Updating with presence: {:?}\n", presence);
 
         unsafe {
             bindings::Discord_UpdatePresence(presence);
@@ -95,29 +96,41 @@ pub unsafe extern "C" fn handle_ready() {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn handle_errored(error_code: i32, error_message: *const ::std::os::raw::c_char) {
-
+pub unsafe extern "C" fn handle_errored(
+    error_code: i32,
+    error_message: *const ::std::os::raw::c_char,
+) {
     let error_message: &CStr = CStr::from_ptr(error_message);
 
     println!("Errored called: {:?} - {:?}", error_code, error_message);
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn handle_disconnected(error_code: i32, error_message: *const ::std::os::raw::c_char) {
-    println!("Disconnected called!");
+pub unsafe extern "C" fn handle_disconnected(
+    error_code: i32,
+    error_message: *const ::std::os::raw::c_char,
+) {
+    let error_message: &CStr = CStr::from_ptr(error_message);
+
+    println!(
+        "Disconnected called: {:?} - {:?}",
+        error_code, error_message
+    );
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn handle_join_game(join_secret: *const ::std::os::raw::c_char) {
-    println!("Join Game called!");
+    let join_secret: &CStr = CStr::from_ptr(join_secret);
+
+    println!("Join Game called: {:?}", join_secret);
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn handle_join_request(join_request: *const bindings::DiscordJoinRequest) {
-    println!("Join Request called!");
+    println!("Join Request called: {:?}", join_request);
 }
-#[no_mangle]
 
+#[no_mangle]
 pub unsafe extern "C" fn handle_spectate(spectate_secret: *const ::std::os::raw::c_char) {
     println!("Spectate called!");
 }
@@ -128,9 +141,9 @@ fn connect_and_listen() {
         ready: Some(handle_ready),
         errored: Some(handle_errored),
         disconnected: Some(handle_disconnected),
-        joinGame: Some(handle_join_game),
-        joinRequest: Some(handle_join_request),
-        spectateGame: Some(handle_spectate),
+        join_game: Some(handle_join_game),
+        join_request: Some(handle_join_request),
+        spectate_game: Some(handle_spectate),
     };
 
     let conn = DiscordConnection::new(
@@ -139,17 +152,24 @@ fn connect_and_listen() {
         1,
         "".to_string(),
     );
+    conn.run_callbacks();
 
     let presence = bindings::DiscordRichPresence {
-        state: CString::new(String::from("WOOH DISCORD")).unwrap().as_ptr(),
+        state: CString::new(String::from("WOOH DISCORD"))
+            .unwrap()
+            .into_raw(),
         details: CString::new(String::from("RICH PRESENCE"))
             .unwrap()
-            .as_ptr(),
+            .into_raw(),
         ..conn.presence
     };
 
+    println!("State: {:?}", unsafe { CString::new(String::from("WOOH DISCORD")).unwrap().into_raw() });
+    println!("State: {:?}", unsafe { CStr::from_ptr(presence.state) });
+    println!("Presence: {:?}", presence);
+
+    conn.update(&presence);
     loop {
-        conn.update(&presence);
         conn.run_callbacks();
     }
 }

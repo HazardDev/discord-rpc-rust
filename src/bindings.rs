@@ -26,18 +26,18 @@ pub const DISCORD_REPLY_IGNORE: u32 = 2;
 pub struct DiscordRichPresence {
     pub state: *const ::std::os::raw::c_char,
     pub details: *const ::std::os::raw::c_char,
-    pub startTimestamp: i64,
-    pub endTimestamp: i64,
-    pub largeImageKey: *const ::std::os::raw::c_char,
-    pub largeImageText: *const ::std::os::raw::c_char,
-    pub smallImageKey: *const ::std::os::raw::c_char,
-    pub smallImageText: *const ::std::os::raw::c_char,
-    pub partyId: *const ::std::os::raw::c_char,
-    pub partySize: ::std::os::raw::c_int,
-    pub partyMax: ::std::os::raw::c_int,
-    pub matchSecret: *const ::std::os::raw::c_char,
-    pub joinSecret: *const ::std::os::raw::c_char,
-    pub spectateSecret: *const ::std::os::raw::c_char,
+    pub start_timestamp: i64,
+    pub end_timestamp: i64,
+    pub large_image_key: *const ::std::os::raw::c_char,
+    pub large_image_text: *const ::std::os::raw::c_char,
+    pub small_image_key: *const ::std::os::raw::c_char,
+    pub small_image_text: *const ::std::os::raw::c_char,
+    pub party_id: *const ::std::os::raw::c_char,
+    pub party_size: ::std::os::raw::c_int,
+    pub party_max: ::std::os::raw::c_int,
+    pub match_secret: *const ::std::os::raw::c_char,
+    pub join_secret: *const ::std::os::raw::c_char,
+    pub spectate_secret: *const ::std::os::raw::c_char,
     pub instance: i8,
 }
 
@@ -56,25 +56,25 @@ pub struct DiscordJoinRequest {
 #[link(name="discord-rpc", kind="static")]
 pub struct DiscordEventHandlers {
     pub ready: ::std::option::Option<unsafe extern "C" fn()>,
-    pub disconnected: ::std::option::Option<unsafe extern "C" fn(errorCode: ::std::os::raw::c_int, message: *const ::std::os::raw::c_char)>,
-    pub errored: ::std::option::Option<unsafe extern "C" fn(errorCode: ::std::os::raw::c_int, message: *const ::std::os::raw::c_char)>,
-    pub joinGame: ::std::option::Option<unsafe extern "C" fn(joinSecret: *const ::std::os::raw::c_char)>,
-    pub spectateGame: ::std::option::Option<unsafe extern "C" fn(spectateSecret: *const ::std::os::raw::c_char)>,
-    pub joinRequest: ::std::option::Option<unsafe extern "C" fn(request: *const DiscordJoinRequest)>,
+    pub disconnected: ::std::option::Option<unsafe extern "C" fn(error_code: ::std::os::raw::c_int, message: *const ::std::os::raw::c_char)>,
+    pub errored: ::std::option::Option<unsafe extern "C" fn(error_code: ::std::os::raw::c_int, message: *const ::std::os::raw::c_char)>,
+    pub join_game: ::std::option::Option<unsafe extern "C" fn(join_secret: *const ::std::os::raw::c_char)>,
+    pub spectate_game: ::std::option::Option<unsafe extern "C" fn(spectate_secret: *const ::std::os::raw::c_char)>,
+    pub join_request: ::std::option::Option<unsafe extern "C" fn(request: *const DiscordJoinRequest)>,
 }
 
 
 #[link(name="discord-rpc", kind="static")]
 extern "C" {
     pub fn Discord_Initialize(
-        applicationId: *const ::std::os::raw::c_char,
+        application_id: *const ::std::os::raw::c_char,
         handlers: *mut DiscordEventHandlers,
-        autoRegister: ::std::os::raw::c_int,
-        optionalSteamId: *const ::std::os::raw::c_char,
+        auto_register: ::std::os::raw::c_int,
+        optional_steam_id: *const ::std::os::raw::c_char,
     );
     pub fn Discord_Shutdown();
     pub fn Discord_RunCallbacks();
     pub fn Discord_UpdatePresence(presence: *const DiscordRichPresence);
     pub fn Discord_ClearPresence();
-    pub fn Discord_Respond(userid: *const ::std::os::raw::c_char, reply: ::std::os::raw::c_int);
+    pub fn Discord_Respond(user_id: *const ::std::os::raw::c_char, reply: ::std::os::raw::c_int);
 }

@@ -4,8 +4,6 @@ use std::env;
 use std::path::PathBuf;
 
 fn main() {
-    println!(r"cargo:rustc-link-search=.\lib");
-
     let bindings = bindgen::Builder::default()
         .header(".\\lib\\discord_rpc.h")
         .generate()
@@ -15,4 +13,6 @@ fn main() {
     bindings
         .write_to_file(out_path.join("bindings.rs"))
         .expect("Couldn't write bindings!");
+
+    println!(r"cargo:rustc-link-search=.\lib");
 }

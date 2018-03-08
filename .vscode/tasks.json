@@ -1,0 +1,60 @@
+{
+	// See https://go.microsoft.com/fwlink/?LinkId=733558
+	// for the documentation about the tasks.json format
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Clear CMake Config",
+			"type": "shell",
+			"command": "rm",
+			"args": [
+				"discord-rpc/CMakeCache.txt"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Configure CMake",
+			"type": "shell",
+			"command": "cmake",
+			"windows": {
+				"args": [
+					".",
+					"-G",
+					"'Visual Studio 15 2017 Win64'",
+					"-DCMAKE_INSTALL_PREFIX=build"
+				]
+			},
+			"options": {
+				"cwd": "${workspaceRoot}/discord-rpc"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Build DiscordRPC",
+			"type": "shell",
+			"command": "cmake",
+			"args": [
+				"--build",
+				"build",
+				"--config",
+				"Release",
+				"--target",
+				"install"
+			],
+			"options": {
+				"cwd": "${workspaceRoot}/discord-rpc"
+			},
+			"problemMatcher": [],
+			"dependsOn": "createCMakeOutputFolder"
+		}, 
+		{
+			"label": "Create CMake Output Folder",
+			"identifier": "createCMakeOutputFolder",
+			"type": "shell",
+			"command": "cd discord-rpc && mkdir build",
+			"windows": {
+				"command": "cd discord-rpc; mkdir build"
+			}
+		}
+	]
+}

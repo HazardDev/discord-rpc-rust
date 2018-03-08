@@ -36,27 +36,31 @@ impl<'d> DiscordConnection<'d> {
         }
 
         DiscordConnection {
+
             application_id: application_id,
             auto_register: auto_register,
             steam_id: steam_id,
             handlers: handlers,
             status: bindings::DiscordRichPresence {
-                state: CString::new(String::new()).unwrap().as_ptr(),
-                details: CString::new(String::new()).unwrap().as_ptr(),
-                startTimestamp: 0,
-                endTimestamp: 0,
-                largeImageKey: CString::new(String::new()).unwrap().as_ptr(),
-                largeImageText: CString::new(String::new()).unwrap().as_ptr(),
-                smallImageKey: CString::new(String::new()).unwrap().as_ptr(),
-                smallImageText: CString::new(String::new()).unwrap().as_ptr(),
-                partyId: CString::new(String::new()).unwrap().as_ptr(),
-                partySize: 0,
-                partyMax: 0,
-                matchSecret: CString::new(String::new()).unwrap().as_ptr(),
-                joinSecret: CString::new(String::new()).unwrap().as_ptr(),
-                spectateSecret: CString::new(String::new()).unwrap().as_ptr(),
-                instance: 0
+
+                state:              CString::new(String::new()).unwrap().as_ptr(),
+                details:            CString::new(String::new()).unwrap().as_ptr(),
+                startTimestamp:     0,
+                endTimestamp:       0,
+                largeImageKey:      CString::new(String::new()).unwrap().as_ptr(),
+                largeImageText:     CString::new(String::new()).unwrap().as_ptr(),
+                smallImageKey:      CString::new(String::new()).unwrap().as_ptr(),
+                smallImageText:     CString::new(String::new()).unwrap().as_ptr(),
+                partyId:            CString::new(String::new()).unwrap().as_ptr(),
+                partySize:          0,
+                partyMax:           0,
+                matchSecret:        CString::new(String::new()).unwrap().as_ptr(),
+                joinSecret:         CString::new(String::new()).unwrap().as_ptr(),
+                spectateSecret:     CString::new(String::new()).unwrap().as_ptr(),
+                instance:           0
+
             }
+            
         }
 
     }

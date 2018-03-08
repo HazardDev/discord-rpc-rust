@@ -16,6 +16,7 @@ pub mod bindings;
 
 #[allow(dead_code)]
 struct DiscordConnection {
+    ready: bool,
     presence: bindings::DiscordRichPresence,
     application_id: String,
     auto_register: i32,
@@ -41,6 +42,7 @@ impl DiscordConnection {
         }
 
         DiscordConnection {
+            ready: false,
             application_id: application_id,
             auto_register: auto_register,
             steam_id: steam_id,
@@ -166,9 +168,15 @@ fn connect_and_listen() {
         ..conn.presence
     };
 
-    println!("State: {:?}", unsafe { CString::new(String::from("WOOH DISCORD")).unwrap().into_raw() });
+    println!("State: {:?}", CString::new(String::from("WOOH DISCORD")).unwrap().into_raw() );
     println!("State: {:?}", unsafe { CStr::from_ptr(presence.state) });
     println!("Presence: {:?}", presence);
+
+    loop {
+        if conn.ready {
+            break;
+        }
+    }
 
     conn.update(&presence);
     loop {

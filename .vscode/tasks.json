@@ -19,9 +19,9 @@
 			"windows": {
 				"args": [
 					".",
+					"-DCMAKE_INSTALL_PREFIX=build",
 					"-G",
-					"'Visual Studio 15 2017 Win64'",
-					"-DCMAKE_INSTALL_PREFIX=build"
+					"'Visual Studio 15 2017 Win64'"
 				]
 			},
 			"options": {
@@ -35,18 +35,17 @@
 			"command": "cmake",
 			"args": [
 				"--build",
-				"build",
+				".",
 				"--config",
 				"Release",
 				"--target",
 				"install"
 			],
 			"options": {
-				"cwd": "${workspaceRoot}/discord-rpc"
+				"cwd": "${workspaceRoot}/discord-rpc/build"
 			},
-			"problemMatcher": [],
-			"dependsOn": "createCMakeOutputFolder"
-		}, 
+			"problemMatcher": []
+		},
 		{
 			"label": "Create CMake Output Folder",
 			"identifier": "createCMakeOutputFolder",
@@ -54,7 +53,8 @@
 			"command": "cd discord-rpc && mkdir build",
 			"windows": {
 				"command": "cd discord-rpc; mkdir build"
-			}
+			},
+			"problemMatcher": []
 		}
 	]
 }

@@ -27,9 +27,9 @@ struct DiscordConnection {
 impl DiscordConnection {
     fn new(
         applicationId: String,
+        handlers: &mut bindings::DiscordEventHandlers,
         auto_register: libc::c_int,
         steam_id: String,
-        handlers: &mut bindings::DiscordEventHandlers,
     ) -> DiscordConnection {
         unsafe {
             bindings::Discord_Initialize(
@@ -135,9 +135,9 @@ fn connect_and_listen() {
 
     let conn = DiscordConnection::new(
         "421166510254587905".to_string(),
+        &mut handlers,
         1,
         "".to_string(),
-        &mut handlers,
     );
 
     let presence = bindings::DiscordRichPresence {

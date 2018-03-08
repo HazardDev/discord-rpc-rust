@@ -5,5 +5,5 @@ use std::path::PathBuf;
 
 fn main() {
 
-    println!(r"cargo:rustc-link-search=discord-rpc\lib\");
+    println!(r"cargo:rustc-link-search=discord-rpc\build\build\lib\");
 }

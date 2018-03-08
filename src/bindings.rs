@@ -45,7 +45,7 @@ pub struct DiscordRichPresence {
 #[derive(Debug, Copy, Clone)]
 #[link(name="discord-rpc", kind="static")]
 pub struct DiscordJoinRequest {
-    pub userId: *const ::std::os::raw::c_char,
+    pub user_id: *const ::std::os::raw::c_char,
     pub username: *const ::std::os::raw::c_char,
     pub discriminator: *const ::std::os::raw::c_char,
     pub avatar: *const ::std::os::raw::c_char,

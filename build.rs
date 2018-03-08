@@ -4,15 +4,15 @@ use std::env;
 use std::path::PathBuf;
 
 fn main() {
-    let bindings = bindgen::Builder::default()
-        .header(".\\lib\\discord_rpc.h")
-        .generate()
-        .expect("Unable to generate bindings");
+    // let bindings = bindgen::Builder::default()
+    //     .header(".\\discord-rpc\\include\\discord_rpc.h")
+    //     .generate()
+    //     .expect("Unable to generate bindings");
 
-    let out_path = PathBuf::from("src");
-    bindings
-        .write_to_file(out_path.join("bindings.rs"))
-        .expect("Couldn't write bindings!");
+    // let out_path = PathBuf::from("src");
+    // bindings
+    //     .write_to_file(out_path.join("bindings.rs"))
+    //     .expect("Couldn't write bindings!");
 
-    println!(r"cargo:rustc-link-search=.\lib");
+    println!(r"cargo:rustc-link-lib='C:\Users\jewso\Dev\Generic\discord-rpc-rust\discord-rpc\lib\discord-rpc.lib'");
 }

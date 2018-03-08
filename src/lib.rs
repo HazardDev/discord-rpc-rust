@@ -14,18 +14,18 @@ use std::ffi::CString;
 pub mod bindings;
 
 #[allow(dead_code)]
-struct DiscordConnection<'d> {
+struct DiscordConnection {
     status: bindings::DiscordRichPresence,
     application_id: String,
     auto_register: i32,
     steam_id: String,
-    handlers: &'d mut bindings::DiscordEventHandlers
+    handlers: bindings::DiscordEventHandlers
 }
 
 #[allow(dead_code)]
-impl<'d> DiscordConnection<'d> {
+impl DiscordConnection {
 
-    fn new(application_id: String, auto_register: libc::c_int, steam_id: String, handlers: &'d mut bindings::DiscordEventHandlers) -> DiscordConnection<'d> {
+    fn new(application_id: String, auto_register: libc::c_int, steam_id: String, handlers: &mut bindings::DiscordEventHandlers) -> DiscordConnection {
         unsafe {
             bindings::Discord_Initialize(
                 CString::new(application_id.as_str()).unwrap().as_ptr(),
@@ -40,7 +40,7 @@ impl<'d> DiscordConnection<'d> {
             application_id: application_id,
             auto_register: auto_register,
             steam_id: steam_id,
-            handlers: handlers,
+            handlers: handlers.to_owned(),
             status: bindings::DiscordRichPresence {
 
                 state:              CString::new(String::new()).unwrap().as_ptr(),
@@ -77,7 +77,7 @@ impl<'d> DiscordConnection<'d> {
     // }
 }
 
-impl<'d> Drop for DiscordConnection<'d> {
+impl Drop for DiscordConnection {
     fn drop(&mut self) {
         println!("Dropping DiscordConnection");
 
@@ -86,7 +86,6 @@ impl<'d> Drop for DiscordConnection<'d> {
         }
     }
 }
-
 pub unsafe extern "C" fn handle_ready() {
     println!("Ready called!")
 }

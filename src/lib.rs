@@ -10,13 +10,14 @@
 
 extern crate libc;
 use std::ffi::CString;
+use std::ffi::CStr;
 
 pub mod bindings;
 
 #[allow(dead_code)]
 struct DiscordConnection {
-    status: bindings::DiscordRichPresence,
-    application_id: String,
+    presence: bindings::DiscordRichPresence,
+    applicationId: String,
     auto_register: i32,
     steam_id: String,
     handlers: bindings::DiscordEventHandlers,
@@ -25,14 +26,14 @@ struct DiscordConnection {
 #[allow(dead_code)]
 impl DiscordConnection {
     fn new(
-        application_id: String,
+        applicationId: String,
         auto_register: libc::c_int,
         steam_id: String,
         handlers: &mut bindings::DiscordEventHandlers,
     ) -> DiscordConnection {
         unsafe {
             bindings::Discord_Initialize(
-                CString::new(application_id.as_str()).unwrap().as_ptr(),
+                CString::new(applicationId.as_str()).unwrap().as_ptr(),
                 handlers,
                 auto_register,
                 CString::new(steam_id.as_str()).unwrap().as_ptr(),
@@ -40,11 +41,11 @@ impl DiscordConnection {
         }
 
         DiscordConnection {
-            application_id: application_id,
+            applicationId: applicationId,
             auto_register: auto_register,
             steam_id: steam_id,
             handlers: handlers.to_owned(),
-            status: bindings::DiscordRichPresence {
+            presence: bindings::DiscordRichPresence {
                 state: CString::new(String::new()).unwrap().as_ptr(),
                 details: CString::new(String::new()).unwrap().as_ptr(),
                 startTimestamp: 0,
@@ -65,6 +66,7 @@ impl DiscordConnection {
     }
 
     fn update(&self, presence: &bindings::DiscordRichPresence) {
+
         unsafe {
             bindings::Discord_UpdatePresence(presence);
         }
@@ -86,33 +88,37 @@ impl Drop for DiscordConnection {
         }
     }
 }
+
 #[no_mangle]
 pub unsafe extern "C" fn handle_ready() {
     println!("Ready called!");
 }
-#[no_mangle]
 
-pub unsafe extern "C" fn handle_errored(error_code: i32, error_message: *const i8) {
-    println!("Errored called!");
+#[no_mangle]
+pub unsafe extern "C" fn handle_errored(error_code: i32, error_message: *const ::std::os::raw::c_char) {
+
+    let error_message: &CStr = CStr::from_ptr(error_message);
+
+    println!("Errored called: {:?} - {:?}", error_code, error_message);
 }
-#[no_mangle]
 
-pub unsafe extern "C" fn handle_disconnected(error_code: i32, error_message: *const i8) {
+#[no_mangle]
+pub unsafe extern "C" fn handle_disconnected(error_code: i32, error_message: *const ::std::os::raw::c_char) {
     println!("Disconnected called!");
 }
-#[no_mangle]
 
-pub unsafe extern "C" fn handle_join_game(join_secret: *const i8) {
+#[no_mangle]
+pub unsafe extern "C" fn handle_join_game(join_secret: *const ::std::os::raw::c_char) {
     println!("Join Game called!");
 }
-#[no_mangle]
 
+#[no_mangle]
 pub unsafe extern "C" fn handle_join_request(join_request: *const bindings::DiscordJoinRequest) {
     println!("Join Request called!");
 }
 #[no_mangle]
 
-pub unsafe extern "C" fn handle_spectate(spectate_secret: *const i8) {
+pub unsafe extern "C" fn handle_spectate(spectate_secret: *const ::std::os::raw::c_char) {
     println!("Spectate called!");
 }
 
@@ -139,7 +145,7 @@ fn connect_and_listen() {
         details: CString::new(String::from("RICH PRESENCE"))
             .unwrap()
             .as_ptr(),
-        ..conn.status
+        ..conn.presence
     };
 
     loop {

@@ -132,7 +132,9 @@ pub unsafe extern "C" fn handle_join_request(join_request: *const bindings::Disc
 
 #[no_mangle]
 pub unsafe extern "C" fn handle_spectate(spectate_secret: *const ::std::os::raw::c_char) {
-    println!("Spectate called!");
+    let spectate_secret: &CStr = CStr::from_ptr(spectate_secret);
+    
+    println!("Spectate called: {:?}", spectate_secret);
 }
 
 #[test]

@@ -63,6 +63,7 @@ pub struct DiscordEventHandlers {
     pub joinRequest: ::std::option::Option<unsafe extern "C" fn(request: *const DiscordJoinRequest)>,
 }
 
+
 #[link(name="discord-rpc", kind="static")]
 extern "C" {
     pub fn Discord_Initialize(

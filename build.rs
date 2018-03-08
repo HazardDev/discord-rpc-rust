@@ -14,5 +14,5 @@ fn main() {
     //     .write_to_file(out_path.join("bindings.rs"))
     //     .expect("Couldn't write bindings!");
 
-    println!(r"cargo:rustc-link-lib='C:\Users\jewso\Dev\Generic\discord-rpc-rust\discord-rpc\lib\discord-rpc.lib'");
+    println!(r"cargo:rustc-link-search=discord-rpc\lib\");
 }

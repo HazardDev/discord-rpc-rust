@@ -19,13 +19,17 @@ struct DiscordConnection {
     application_id: String,
     auto_register: i32,
     steam_id: String,
-    handlers: bindings::DiscordEventHandlers
+    handlers: bindings::DiscordEventHandlers,
 }
 
 #[allow(dead_code)]
 impl DiscordConnection {
-
-    fn new(application_id: String, auto_register: libc::c_int, steam_id: String, handlers: &mut bindings::DiscordEventHandlers) -> DiscordConnection {
+    fn new(
+        application_id: String,
+        auto_register: libc::c_int,
+        steam_id: String,
+        handlers: &mut bindings::DiscordEventHandlers,
+    ) -> DiscordConnection {
         unsafe {
             bindings::Discord_Initialize(
                 CString::new(application_id.as_str()).unwrap().as_ptr(),
@@ -36,45 +40,41 @@ impl DiscordConnection {
         }
 
         DiscordConnection {
-
             application_id: application_id,
             auto_register: auto_register,
             steam_id: steam_id,
             handlers: handlers.to_owned(),
             status: bindings::DiscordRichPresence {
-
-                state:              CString::new(String::new()).unwrap().as_ptr(),
-                details:            CString::new(String::new()).unwrap().as_ptr(),
-                startTimestamp:     0,
-                endTimestamp:       0,
-                largeImageKey:      CString::new(String::new()).unwrap().as_ptr(),
-                largeImageText:     CString::new(String::new()).unwrap().as_ptr(),
-                smallImageKey:      CString::new(String::new()).unwrap().as_ptr(),
-                smallImageText:     CString::new(String::new()).unwrap().as_ptr(),
-                partyId:            CString::new(String::new()).unwrap().as_ptr(),
-                partySize:          0,
-                partyMax:           0,
-                matchSecret:        CString::new(String::new()).unwrap().as_ptr(),
-                joinSecret:         CString::new(String::new()).unwrap().as_ptr(),
-                spectateSecret:     CString::new(String::new()).unwrap().as_ptr(),
-                instance:           0
-
-            }
-            
+                state: CString::new(String::new()).unwrap().as_ptr(),
+                details: CString::new(String::new()).unwrap().as_ptr(),
+                startTimestamp: 0,
+                endTimestamp: 0,
+                largeImageKey: CString::new(String::new()).unwrap().as_ptr(),
+                largeImageText: CString::new(String::new()).unwrap().as_ptr(),
+                smallImageKey: CString::new(String::new()).unwrap().as_ptr(),
+                smallImageText: CString::new(String::new()).unwrap().as_ptr(),
+                partyId: CString::new(String::new()).unwrap().as_ptr(),
+                partySize: 0,
+                partyMax: 0,
+                matchSecret: CString::new(String::new()).unwrap().as_ptr(),
+                joinSecret: CString::new(String::new()).unwrap().as_ptr(),
+                spectateSecret: CString::new(String::new()).unwrap().as_ptr(),
+                instance: 0,
+            },
         }
-
     }
 
-    // fn connect(&mut self) {
-    //     unsafe {
-    //         bindings::Discord_Initialize(
-    //             CString::new(self.application_id).unwrap().as_ptr(),
-    //             self.handlers,
-    //             self.auto_register,
-    //             CString::new(self.steam_id).unwrap().as_ptr(),
-    //         )
-    //     }
-    // }
+    fn update(&self, presence: &bindings::DiscordRichPresence) {
+        unsafe {
+            bindings::Discord_UpdatePresence(presence);
+        }
+    }
+
+    fn run_callbacks(&self) {
+        unsafe {
+            bindings::Discord_RunCallbacks();
+        }
+    }
 }
 
 impl Drop for DiscordConnection {
@@ -86,41 +86,64 @@ impl Drop for DiscordConnection {
         }
     }
 }
+#[no_mangle]
 pub unsafe extern "C" fn handle_ready() {
-    println!("Ready called!")
+    println!("Ready called!");
 }
+#[no_mangle]
 
 pub unsafe extern "C" fn handle_errored(error_code: i32, error_message: *const i8) {
-    println!("Errored called!")
+    println!("Errored called!");
 }
+#[no_mangle]
 
 pub unsafe extern "C" fn handle_disconnected(error_code: i32, error_message: *const i8) {
-    println!("Disconnected called!")
+    println!("Disconnected called!");
 }
+#[no_mangle]
 
 pub unsafe extern "C" fn handle_join_game(join_secret: *const i8) {
-    println!("Disconnected called!")
+    println!("Join Game called!");
 }
+#[no_mangle]
 
 pub unsafe extern "C" fn handle_join_request(join_request: *const bindings::DiscordJoinRequest) {
-    println!("Disconnected called!")
+    println!("Join Request called!");
 }
+#[no_mangle]
 
 pub unsafe extern "C" fn handle_spectate(spectate_secret: *const i8) {
-    println!("Disconnected called!")
+    println!("Spectate called!");
 }
 
 #[test]
 fn connect_and_listen() {
-
     let mut handlers = bindings::DiscordEventHandlers {
-            ready:        Some(handle_ready),
-            errored:      Some(handle_errored),
-            disconnected: Some(handle_disconnected),
-            joinGame:     Some(handle_join_game),
-            joinRequest:  Some(handle_join_request),
-            spectateGame: Some(handle_spectate)
+        ready: Some(handle_ready),
+        errored: Some(handle_errored),
+        disconnected: Some(handle_disconnected),
+        joinGame: Some(handle_join_game),
+        joinRequest: Some(handle_join_request),
+        spectateGame: Some(handle_spectate),
     };
 
-    let conn = DiscordConnection::new("YOUR_CLIENT_ID".to_string(), 1, "".to_string(), &mut handlers);
+    let conn = DiscordConnection::new(
+        "421166510254587905".to_string(),
+        1,
+        "".to_string(),
+        &mut handlers,
+    );
+
+    let presence = bindings::DiscordRichPresence {
+        state: CString::new(String::from("WOOH DISCORD")).unwrap().as_ptr(),
+        details: CString::new(String::from("RICH PRESENCE"))
+            .unwrap()
+            .as_ptr(),
+        ..conn.status
+    };
+
+    loop {
+        conn.update(&presence);
+        conn.run_callbacks();
+    }
 }

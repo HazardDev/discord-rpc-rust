@@ -15,14 +15,14 @@ extern crate libc;
 use std::ffi::CStr;
 use std::ffi::CString;
 
-static mut AUTHORIZED: bool = false;
+static mut READY: bool = false;
 
-pub mod bindings;
+mod bindings;
 
 #[allow(dead_code)]
-struct DiscordConnection {
+pub struct DiscordConnection {
     ready: bool,
-    presence: bindings::DiscordRichPresence,
+    pub presence: bindings::DiscordRichPresence,
     application_id: String,
     auto_register: i32,
     steam_id: String,
@@ -83,15 +83,16 @@ impl DiscordConnection {
         }
     }
 
-    fn run_callbacks(&self) {
+    fn run_callbacks(&mut self) {
         unsafe {
+            self.ready = READY;
             bindings::Discord_RunCallbacks();
         }
     }
 
     #[no_mangle]
     extern "C" fn handle_ready() {
-        unsafe { AUTHORIZED = true; }
+        unsafe { READY = true; }
         println!("Ready called!");
     }
 
@@ -133,6 +134,10 @@ impl DiscordConnection {
 
         println!("Spectate called: {:?}", spectate_secret);
     }
+
+    fn ready(&self) -> bool {
+        self.ready
+    }
 }
 
 impl Drop for DiscordConnection {
@@ -140,6 +145,7 @@ impl Drop for DiscordConnection {
         println!("Dropping DiscordConnection");
 
         unsafe {
+            READY = false;
             bindings::Discord_Shutdown();
         }
     }
@@ -157,12 +163,12 @@ mod test {
             ready: Some(DiscordConnection::handle_ready),
             errored: Some(DiscordConnection::handle_errored),
             disconnected: Some(DiscordConnection::handle_disconnected),
-            join_game: Some(DiscordConnection::handle_join_game),
-            join_request: Some(DiscordConnection::handle_join_request),
-            spectate_game: Some(DiscordConnection::handle_spectate),
+            join_game: None,
+            join_request: None,
+            spectate_game: None,
         };
 
-        let conn: DiscordConnection = DiscordConnection::new(
+        let mut conn: DiscordConnection = DiscordConnection::new(
             "421166510254587905".to_string(),
             &mut handlers,
             1,
@@ -203,7 +209,7 @@ mod test {
         loop {
 
             conn.run_callbacks();
-            if unsafe { AUTHORIZED } {
+            if conn.ready() {
                 break;
             }
         }

@@ -7,22 +7,23 @@
 
 */
 
-
-
 #![feature(libc)]
 
 extern crate libc;
-use std::ffi::CStr;
-use std::ffi::CString;
+use std::ffi::{CStr, CString};
+use std::os::raw::c_char;
 
 static mut READY: bool = false;
 
-mod bindings;
+pub mod bindings;
+pub mod presence;
+
+use presence::Presence;
 
 #[allow(dead_code)]
 pub struct DiscordConnection {
     ready: bool,
-    pub presence: bindings::DiscordRichPresence,
+    presence: Presence,
     application_id: String,
     auto_register: i32,
     steam_id: String,
@@ -31,7 +32,7 @@ pub struct DiscordConnection {
 
 #[allow(dead_code)]
 impl DiscordConnection {
-    fn new(
+    pub fn new(
         application_id: String,
         handlers: &mut bindings::DiscordEventHandlers,
         auto_register: libc::c_int,
@@ -54,59 +55,50 @@ impl DiscordConnection {
             handlers: handlers.to_owned(),
 
             //Default, empty presence
-            presence: bindings::DiscordRichPresence {
-                state: CString::new(String::new()).unwrap().as_ptr(),
-                details: CString::new(String::new()).unwrap().as_ptr(),
-                start_timestamp: 0,
-                end_timestamp: 0,
-                large_image_key: CString::new(String::new()).unwrap().as_ptr(),
-                large_image_text: CString::new(String::new()).unwrap().as_ptr(),
-                small_image_key: CString::new(String::new()).unwrap().as_ptr(),
-                small_image_text: CString::new(String::new()).unwrap().as_ptr(),
-                party_id: CString::new(String::new()).unwrap().as_ptr(),
-                party_size: 0,
-                party_max: 0,
-                match_secret: CString::new(String::new()).unwrap().as_ptr(),
-                join_secret: CString::new(String::new()).unwrap().as_ptr(),
-                spectate_secret: CString::new(String::new()).unwrap().as_ptr(),
-                instance: 0,
-            },
+            presence: Presence::default(),
         }
     }
 
-    fn update(&self, presence: &bindings::DiscordRichPresence) {
+    pub fn update(&self, presence: &mut Presence) {
         // println!("Updating with presence: {:?}\n", presence);
 
-        unsafe {
+        if !self.ready() {
+            panic!("Update called before discord was ready.");
+        }
 
-            bindings::Discord_UpdatePresence(presence);
+        unsafe {
+            bindings::Discord_UpdatePresence(&presence.as_c_presence());
         }
     }
 
-    fn run_callbacks(&mut self) {
+    pub fn run_callbacks(&mut self) {
         unsafe {
+            //Sets the struct's ready callback to whatever is in the global READY
             self.ready = READY;
             bindings::Discord_RunCallbacks();
         }
     }
 
     #[no_mangle]
-    extern "C" fn handle_ready() {
-        unsafe { READY = true; }
+    pub extern "C" fn handle_ready() {
+        unsafe {
+            READY = true;
+        }
         println!("Ready called!");
     }
 
     #[no_mangle]
-    extern "C" fn handle_errored(error_code: i32, error_message: *const ::std::os::raw::c_char) {
-        let error_message: String = unsafe { CStr::from_ptr(error_message).to_string_lossy().into_owned() };
+    pub extern "C" fn handle_errored(error_code: i32, error_message: *const c_char) {
+        let error_message: String =
+            unsafe { CStr::from_ptr(error_message).to_string_lossy().into_owned() };
 
         println!("Errored called: {:?} - {:?}", error_code, error_message);
     }
 
     #[no_mangle]
-    extern "C" fn handle_disconnected(
+    pub extern "C" fn handle_disconnected(
         error_code: i32,
-        error_message: *const ::std::os::raw::c_char,
+        error_message: *const c_char,
     ) {
         let error_message: &CStr = unsafe { CStr::from_ptr(error_message) };
 
@@ -117,25 +109,25 @@ impl DiscordConnection {
     }
 
     #[no_mangle]
-    extern "C" fn handle_join_game(join_secret: *const ::std::os::raw::c_char) {
+    pub extern "C" fn handle_join_game(join_secret: *const c_char) {
         let join_secret: &CStr = unsafe { CStr::from_ptr(join_secret) };
 
         println!("Join Game called: {:?}", join_secret);
     }
 
     #[no_mangle]
-    extern "C" fn handle_join_request(join_request: *const bindings::DiscordJoinRequest) {
+    pub extern "C" fn handle_join_request(join_request: *const bindings::DiscordJoinRequest) {
         println!("Join Request called: {:?}", join_request);
     }
 
     #[no_mangle]
-    extern "C" fn handle_spectate(spectate_secret: *const ::std::os::raw::c_char) {
+    pub extern "C" fn handle_spectate(spectate_secret: *const c_char) {
         let spectate_secret: &CStr = unsafe { CStr::from_ptr(spectate_secret) };
 
         println!("Spectate called: {:?}", spectate_secret);
     }
 
-    fn ready(&self) -> bool {
+    pub fn ready(&self) -> bool {
         self.ready
     }
 }
@@ -146,87 +138,8 @@ impl Drop for DiscordConnection {
 
         unsafe {
             READY = false;
+            bindings::Discord_ClearPresence();
             bindings::Discord_Shutdown();
         }
-    }
-}
-
-#[cfg(test)]
-mod test {
-
-    use super::*;
-    use std::{thread, time};
-
-    #[test]
-    fn connect_and_listen() {
-        let mut handlers = bindings::DiscordEventHandlers {
-            ready: Some(DiscordConnection::handle_ready),
-            errored: Some(DiscordConnection::handle_errored),
-            disconnected: Some(DiscordConnection::handle_disconnected),
-            join_game: None,
-            join_request: None,
-            spectate_game: None,
-        };
-
-        let mut conn: DiscordConnection = DiscordConnection::new(
-            "421166510254587905".to_string(),
-            &mut handlers,
-            1,
-            "".to_string(),
-        );
-        conn.run_callbacks();
-
-        let state_value = CString::new("WOO DISCORD").unwrap();
-        let state_pointer = state_value.as_ptr();
-        println!("State Pointer: {:?}", state_pointer);
-
-        //Initial Presence
-
-        let detail_value = CString::new("Rust Rich Presence")
-                .unwrap();
-        let detail_pointer = detail_value.as_ptr();
-
-        let image_key_value = CString::new("default").unwrap();
-        let image_key_pointer = image_key_value.as_ptr();
-        let presence = bindings::DiscordRichPresence {
-            state: state_pointer,
-            details: detail_pointer,
-            large_image_key: image_key_pointer,
-            ..conn.presence
-        };
-
-        println!("State Pointer: {:?}", state_pointer);
-        println!("State Presence: {:?}", presence.state);
-        println!("State Presence String: {:?}", unsafe {
-            CStr::from_ptr(presence.state).to_string_lossy()
-        });
-        println!("Presence: {:?}", presence);
-
-        conn.run_callbacks();
-
-        let two_seconds = time::Duration::from_secs(2);
-
-        loop {
-
-            conn.run_callbacks();
-            if conn.ready() {
-                break;
-            }
-        }
-
-        loop {
-            let now = time::Instant::now();
-            thread::sleep(two_seconds);
-            assert!(now.elapsed() >= two_seconds);
-            println!("State Pointer: {:?}", state_pointer);
-            println!("State Presence: {:?}", presence.state);
-            println!("State Presence String: {:?}", unsafe {
-                CStr::from_ptr(presence.state).to_string_lossy()
-            });
-            println!("Presence: {:?}", presence);
-            conn.run_callbacks();
-            conn.update(&presence);
-        }
-
     }
 }

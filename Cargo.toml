@@ -1,5 +1,5 @@
 [package]
-name = "discord-rpc"
+name = "discord_rpc"
 version = "0.1.0"
 authors = ["HazardDev <logan.saso2016@gmail.com>"]
 build = "build.rs"

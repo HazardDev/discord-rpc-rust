@@ -21,7 +21,7 @@ pub mod presence;
 use presence::Presence;
 
 #[allow(dead_code)]
-pub struct DiscordConnection {
+pub struct DiscordPresenceConnection {
     ready: bool,
     presence: Presence,
     application_id: String,
@@ -31,13 +31,13 @@ pub struct DiscordConnection {
 }
 
 #[allow(dead_code)]
-impl DiscordConnection {
+impl DiscordPresenceConnection {
     pub fn new(
         application_id: String,
         handlers: &mut bindings::DiscordEventHandlers,
         auto_register: libc::c_int,
         steam_id: String,
-    ) -> DiscordConnection {
+    ) -> DiscordPresenceConnection {
         unsafe {
             bindings::Discord_Initialize(
                 CString::new(application_id.as_str()).unwrap().as_ptr(),
@@ -47,7 +47,7 @@ impl DiscordConnection {
             );
         }
 
-        DiscordConnection {
+        DiscordPresenceConnection {
             ready: false,
             application_id: application_id,
             auto_register: auto_register,
@@ -132,9 +132,9 @@ impl DiscordConnection {
     }
 }
 
-impl Drop for DiscordConnection {
+impl Drop for DiscordPresenceConnection {
     fn drop(&mut self) {
-        println!("Dropping DiscordConnection");
+        println!("Dropping DiscordPresenceConnection");
 
         unsafe {
             READY = false;

@@ -1,22 +1,22 @@
 extern crate discord_rpc;
 
 use std::{thread, time};
-use discord_rpc::DiscordConnection;
+use discord_rpc::DiscordPresenceConnection;
 use discord_rpc::bindings::DiscordEventHandlers;
 use discord_rpc::presence::Presence;
 
 #[test]
 fn connect_and_listen() {
     let mut handlers = DiscordEventHandlers {
-        ready: Some(DiscordConnection::handle_ready),
-        errored: Some(DiscordConnection::handle_errored),
-        disconnected: Some(DiscordConnection::handle_disconnected),
+        ready: Some(DiscordPresenceConnection::handle_ready),
+        errored: Some(DiscordPresenceConnection::handle_errored),
+        disconnected: Some(DiscordPresenceConnection::handle_disconnected),
         join_game: None,
         join_request: None,
         spectate_game: None,
     };
 
-    let mut conn: DiscordConnection = DiscordConnection::new(
+    let mut conn: DiscordPresenceConnection = DiscordPresenceConnection::new(
         "421166510254587905".to_string(),
         &mut handlers,
         1,
@@ -59,7 +59,7 @@ fn connect_and_listen() {
         println!("Updating Presence with {:?}", presence);
     }
 
-    for i in 0..10 {
+    for _ in 0..10 {
 
         let now = time::Instant::now();
 

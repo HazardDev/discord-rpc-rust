@@ -1,6 +1,6 @@
 [package]
-name = "discord_rpc"
-version = "0.1.0"
+name = "discord_rpc_rust"
+version = "0.0.0"
 authors = ["HazardDev <logan.saso2016@gmail.com>"]
 build = "build.rs"
 
@@ -9,3 +9,4 @@ libc = "0.2.37"
 
 [build-dependencies]
 bindgen = "0.33.1"
+cmake = "0.1.30"

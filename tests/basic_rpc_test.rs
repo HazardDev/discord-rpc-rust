@@ -1,9 +1,9 @@
-extern crate discord_rpc;
+extern crate discord_rpc_rust;
 
 use std::{thread, time};
-use discord_rpc::DiscordPresenceConnection;
-use discord_rpc::bindings::DiscordEventHandlers;
-use discord_rpc::presence::Presence;
+use discord_rpc_rust::DiscordPresenceConnection;
+use discord_rpc_rust::bindings::DiscordEventHandlers;
+use discord_rpc_rust::presence::Presence;
 
 #[test]
 fn connect_and_listen() {
